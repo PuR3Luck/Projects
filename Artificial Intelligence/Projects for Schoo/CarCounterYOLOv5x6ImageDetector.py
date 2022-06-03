@@ -21,7 +21,7 @@ def plot_bounding_boxes(model,result,labels,coord,frame):
     x_shape,y_shape=frame.shape[1],frame.shape[0]
     for i in range(num_items):
         row=coord[i]
-        if row[4]<0.3:
+        if row[4]<0.3: #confidence threshold
             continue
         x1=int(row[0]*x_shape)
         y1=int(row[1]*y_shape)
