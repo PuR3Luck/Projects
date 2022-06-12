@@ -35,7 +35,7 @@ def plot_bounding_boxes(model,result,labels,coord,frame):
         cv.putText(frame,str_for_bounding_box,(x1,y1),label_font,1,(255,255,255),1) #class names
     return frame
 
-yolo=torch.hub.load('ultralytics/yolov5', 'yolov5x6',pretrained=True)
+yolo=torch.hub.load('ultralytics/yolov5', 'yolov5l6',pretrained=True)
 
 webcam=cv.VideoCapture(0)
 
