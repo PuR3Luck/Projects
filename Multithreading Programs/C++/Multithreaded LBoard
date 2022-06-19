@@ -8,7 +8,8 @@ int count_threads=thread::hardware_concurrency();
 
 //global variables
 long long height,width;
-vector<vector<long long>>board,maxvert,maxhori;
+vector<vector<long long>>board;
+vector<vector<long long>>maxvert,maxhori;
 vector<vector<long long>>horiforboard,horirevboard,vertforboard,vertrevboard;
 
 
