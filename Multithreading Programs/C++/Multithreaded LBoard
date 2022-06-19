@@ -1,0 +1,132 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+//thread pool init
+int count_threads=thread::hardware_concurrency();
+
+
+//global variables
+long long height,width;
+vector<vector<long long>>board,maxvert,maxhori;
+vector<vector<long long>>horiforboard,horirevboard,vertforboard,vertrevboard;
+
+
+auto kadane(vector<long long> &vect) {
+    vector<long long> result;
+    long long sum=0;
+    for (auto i:vect){
+        sum=max(i,sum+i);
+        result.push_back(sum);
+    }
+    return result;
+}
+
+auto height_kadane(vector<long long> &arr) {
+    vector<long long> forward_vec,reverse_vec;
+    forward_vec=kadane(arr);
+    reverse(arr.begin(),arr.end());
+    reverse_vec=kadane(arr);
+    reverse(reverse_vec.begin(),reverse_vec.end());
+    horiforboard.push_back(forward_vec);
+    horirevboard.push_back(reverse_vec);
+}
+
+auto width_kadane(vector<long long> &arr) {
+    vector<long long> reverse_vec,forward_vec;
+    forward_vec=kadane(arr);
+    reverse(arr.begin(),arr.end());
+    reverse_vec=kadane(arr);
+    reverse(reverse_vec.begin(),reverse_vec.end());
+    vertforboard.push_back(forward_vec);
+    vertrevboard.push_back(reverse_vec);
+}
+
+
+
+auto maxhori_comp() {
+    for (int i=0;i<height;++i) {
+        for (int j=0;j<width;++j) {
+            maxhori[i][j]=max(horiforboard[i][j],horirevboard[i][j]);
+        }
+    }//find ans function
+}
+
+auto maxvert_comp(){
+    for (int i=0;i<width;++i) {
+        for (int j=0;j<height;++j) {
+            maxvert[i][j]=max(vertforboard[i][j],vertrevboard[i][j]);
+        }
+    }//find ans function
+}
+
+auto height_process() {
+    for (int i=0;i<height;i++){
+        vector<long long> arr;
+        for (int j=0;j<width;j++){
+            arr.push_back(board[i][j]);
+        }
+        height_kadane(arr);
+    }
+}
+
+auto width_process(){
+    for(int i=0;i<width;++i){
+        vector<long long> arr;
+        for (int j=0;j<height;++j) {
+            arr.push_back(board[j][i]);
+        }
+        width_kadane(arr);
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    cin >> height >> width;
+    
+    for (long long i=0;i<height;++i) {
+        vector<long long> arr(width,0);
+        board.push_back(arr);
+    }
+
+    for (long long i=0;i<height;++i) {
+        for (long long j=0;j<width;++j) {
+            cin >> board[i][j];
+        }
+    }
+
+    for (int i=0;i<height;++i) {
+        maxhori.push_back(vector<long long>(width,0));
+    }
+    for (int i=0;i<width;++i) {
+        maxvert.push_back(vector<long long>(height,0));
+    }
+    
+
+    thread height_thread(height_process);
+    thread width_thread(width_process);
+
+    height_thread.join();
+    width_thread.join();
+
+    thread maxhori_comp_thread(maxhori_comp);
+    thread maxvert_comp_thread(maxvert_comp);
+
+    maxhori_comp_thread.join();
+    maxvert_comp_thread.join();
+
+    long long max_sum=-1e10;
+
+    for (int i=0;i<height;++i) {
+        for (int j=0;j<width;++j) {
+            max_sum=max(max_sum,(maxhori[i][j]+maxvert[j][i]-board[i][j]));
+        }
+    }//finding ans
+
+    cout << max_sum << "\n";//output ans
+
+    return 0;//exit with code 0
+}
