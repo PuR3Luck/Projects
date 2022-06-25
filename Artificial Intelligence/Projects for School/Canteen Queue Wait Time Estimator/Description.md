@@ -1,4 +1,4 @@
 - This folder contains programs for a Canteen Queue Wait Time Estimator Program.
 - It uses the YOLOv5 crowdhuman model to count the number of people in a queue.
 - There are 2 implementations, one using socket and the other using Flask.
-- Note:Implementation using Flask is a WIP
+- Note:Implementation using Flask is a WIP(it was started to allow students to access from a webpage so they do not need to go to the canteen to see the estimates)
