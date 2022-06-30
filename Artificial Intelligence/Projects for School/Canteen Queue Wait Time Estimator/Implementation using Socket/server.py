@@ -6,23 +6,31 @@
 import tkinter as tk
 import threading
 import socket
-import argparse
 
+import argparse
+import os
 import time
 
-# Variables
+import requests
 
-parser = argparse.ArgumentParser(description='Server for Canteen Queue Counter')
+# Parse Arguments
+parser = argparse.ArgumentParser(description='Socket Server for Canteen Queue Counter')
 parser.add_argument('--debug', default=False, action="store_true", help='Turns on debug logging')
-parser.add_argument('--ip', type=str, help='IP address of Server')
-parser.add_argument('--port_number',type=int,help='Port number of server')
-parser.add_argument('--password',type=str,default=None,help='Password for socket')
+parser.add_argument('--url', type=str, default="http://localhost", help='URL of Flask Server')
+parser.add_argument('--ip', type=str, default="0.0.0.0", help='IP Address of Socket Server')
+parser.add_argument('--port', type=int, default=6942, help='Port of Socket Server')
 args = parser.parse_args()
 
+# Variables
 debug = args.debug
 
 server_ip = args.ip
-server_port = args.port_number
+server_port = args.port
+
+url = args.url
+
+auth_key = os.environ["QUEUE_AUTH_KEY"]
+auth_token = os.environ["QUEUE_AUTH_TOKEN"]
 
 stall_name = ["Drinks", "Snacks", "Malay 1", "Malay 2", "Western", "Chicken Rice", "Oriental Taste", "CLOSED"]
 displayed = {}  # Format: [<Tkinter Label Class>, <Last Updated Time (int)>]
@@ -30,7 +38,7 @@ max_clients = 8
 
 last_update_threshold = 60
 
-password = args.password
+password = "YW1vZ3Vz"
 
 # Debug print
 def debug_print(msg):
@@ -41,11 +49,11 @@ def debug_print(msg):
 def init_GUI():
     root = tk.Tk()
 
-    widgetWrapper = tk.Text(root, wrap="char", borderwidth=0,highlightthickness=0,state="disabled", cursor="arrow") 
+    widgetWrapper = tk.Text(root, wrap="char", borderwidth=0, highlightthickness=0, state="disabled", cursor="arrow") 
     widgetWrapper.pack(fill="both", expand=True)
 
     def additem(i):
-        item = tk.Label(bd = 5, relief="solid", text=f"{stall_name[i]}:\n\n               WAITING TIME               \nmins", font=('Arial', 25), bg="white") #Create the actual widgets
+        item = tk.Label(bd = 5, relief="solid", text=f"{stall_name[i]}:\n\n               ???               \nmins", font=('Arial', 25), bg="white") #Create the actual widgets
         displayed[stall_name[i]] = [item, 0]
         widgetWrapper.window_create("end", window=item)
 
@@ -83,6 +91,18 @@ def on_recv_data(c, addr):
     waiting_time = data[2]
 
     displayed[stall][0].config(text=f"{stall}:\n\n               {waiting_time}               \nmins\n")
+
+    # Update Flask server
+    authentication = {auth_key: auth_token}
+
+    try:
+        r = requests.post(url + f"/api/update_timing?stall_name={stall}&queue_time={waiting_time}", headers=authentication)
+        if r.status_code != 200:
+            print("[ERROR] Received status code: " + str(r.status_code) + " from server!")
+            print("[ERROR] Response: " + str(r.text))
+    except Exception as e:
+        print("[ERROR] Failed to send data to server!")
+        print("Error Log: " + str(e))
 
     # Reset Last Updated Time
     displayed[stall][1] = 0
