@@ -5,13 +5,16 @@
 # Libraries
 import argparse
 import sys
+
 import torch
 import cv2
 import numpy as np
+import math
 
 import threading
 import time
 import logging
+import os
 
 import socket
 
@@ -20,21 +23,21 @@ print("Starting script...")
 # Supress YOLOv5 Logging
 logging.getLogger("utils.general").setLevel(logging.WARNING)  # yolov5 logger
 
+# Parse Arguments
 parser = argparse.ArgumentParser(description='Client for Canteen Queue Counter')
 parser.add_argument('--confidence_threshold', type=float, default=0.3, help='Minimum confidence for inference to be considered')
 parser.add_argument('--debug', default=False, action="store_true", help='Turns on debug logging')
 parser.add_argument('--image_debug', default=False, action="store_true", help='Turns on image debugging')
-parser.add_argument('--ip', type=str, help='IP address of Server')
-parser.add_argument('--port_number',type=int,help='Port number of server')
-parser.add_argument('--password',type=str,default=None,help='Password for socket')
+parser.add_argument('--ip', type=str, default="127.0.0.1", help='IP Address of Socket Server')
+parser.add_argument('--port', type=int, default=6942, help='Port of Socket Server')
 args = parser.parse_args()
 
 # Variables
 debug = args.debug
 image_debug = args.image_debug
 
-server_ip = args.ip      # Socket Server info
-server_port = args.port_number
+server_ip = args.ip
+server_port = args.port
 
 password = "YW1vZ3Vz"
 
@@ -66,7 +69,9 @@ class Queue:
     # Function to cut image and flatten with 4 specified points (imageCutPositions)
     def cutImage(self):
         if image_debug:
-            self.image = cv2.imread("./testing/queue_2.jpg")
+            current_dir = os.path.dirname(__file__)
+            img_path = os.path.join(current_dir, "../testing/queue_2.jpg")
+            self.image = cv2.imread(img_path)
             return
 
         img = self.image
@@ -84,14 +89,9 @@ class Queue:
         self.image = image
 
     # Function to count num of people in CUT image, using YOLOv5 alogrithm
-    def countPeople(self,confidence_threshold=args.confidence_threshold):
+    def countPeople(self):
         results = model(self.image)
-        selected_list=[]
-        for inference in results and inference['label']=="head":
-          if inference[4]>=confidence_threshold:
-            selected_list.append(inference)
-        person_count = len(selected_list)
-
+        person_count = list(results.xyxyn[0][:,-1].numpy()).count(1.0)
         return person_count
 
     # Function to get queue time based on number of ppl in mins
@@ -102,7 +102,7 @@ class Queue:
         if approx_mins < 1.0:
             return 0.9
         else:
-            return round(approx_mins,4)
+            return "~" + str(math.ceil(approx_mins))
 
 
 # Print in debug mode
@@ -197,5 +197,4 @@ def main():
 
 # Run Code
 if __name__ == "__main__":
-    print(args)
     main()
